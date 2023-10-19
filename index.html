@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jogo de Reflexo</title>
+  <style>
+    body {
+      background-color: #e3dcb9;
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #start-button {
+      font-size: 24px;
+      padding: 10px 20px;
+      background-color: #fff;
+      border: 2px solid #000;
+      cursor: pointer;
+    }
+
+    #circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background-color: red;
+      display: none;
+      position: absolute;
+    }
+
+    #scoreboard {
+      font-size: 18px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Jogo de Reflexo</h1>
+  <p>Clique no círculo o mais rápido possível!</p>
+  <button id="start-button">Iniciar</button>
+  <div id="circle"></div>
+  <div id="scoreboard"></div>
+
+  <script>
+    var startButton = document.getElementById("start-button");
+    var circle = document.getElementById("circle");
+    var scoreboard = document.getElementById("scoreboard");
+    var startTime, endTime;
+    var counter = 0;
+    var bestScores = [];
+
+    startButton.addEventListener("click", function() {
+      startGame();
+    });
+
+    circle.addEventListener("click", function() {
+      if (circle.style.display !== "none") {
+        endRound();
+      }
+    });
+
+    function startGame() {
+      startButton.style.display = "none";
+      counter = 0;
+      bestScores = loadScores();
+      updateScoreboard();
+      playRound();
+    }
+
+    function playRound() {
+      if (counter < 3) {
+        showCircle();
+      } else {
+        endGame();
+      }
+    }
+
+    function endRound() {
+      endTime = Date.now();
+      var reactionTime = endTime - startTime;
+      alert("Tempo de reação: " + reactionTime + "ms");
+      circle.style.display = "none";
+      counter++;
+      bestScores.push(reactionTime);
+      bestScores.sort(function(a, b) {
+        return a - b;
+      });
+      if (bestScores.length > 10) {
+        bestScores.pop();
+      }
+      saveScores(bestScores);
+      updateScoreboard();
+      setTimeout(playRound, 1000);
+    }
+
+    function endGame() {
+      alert("Fim do jogo! Clique em 'Iniciar' para jogar novamente.");
+      resetGame();
+    }
+
+    function showCircle() {
+      circle.style.backgroundColor = getRandomColor();
+      circle.style.left = getRandomPosition(window.innerWidth - 100) + "px";
+      circle.style.top = getRandomPosition(window.innerHeight - 100) + "px";
+      circle.style.display = "block";
+      startTime = Date.now();
+    }
+
+    function resetGame() {
+      startButton.style.display = "block";
+    }
+
+    function getRandomPosition(max) {
+      return Math.random() * max;
+    }
+
+    function getRandomColor() {
+      var letters = "0123456789ABCDEF";
+      var color = "#";
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function saveScores(scores) {
+      localStorage.setItem("bestScores", JSON.stringify(scores));
+    }
+
+    function loadScores() {
+      var scores = localStorage.getItem("bestScores");
+      return scores ? JSON.parse(scores) : [];
+    }
+
+    function calculateAverage(scores) {
+      if (scores.length === 0) {
+        return 0;
+      }
+      var sum = scores.reduce(function(acc, score) {
+        return acc + score;
+      }, 0);
+      return Math.round(sum / scores.length);
+    }
+
+    function updateScoreboard() {
+      var html = "<h3>Melhores Pontuações:</h3>";
+      if (bestScores.length === 0) {
+        html += "<p>Nenhuma pontuação registrada.</p>";
+      } else {
+        for (var i = 0; i < bestScores.length; i++) {
+          html += "<p>" + (i + 1) + ". " + bestScores[i] + "ms</p>";
+        }
+        var average = calculateAverage(bestScores);
+        html += "<p>Média: " + average + "ms</p>";
+      }
+      scoreboard.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
